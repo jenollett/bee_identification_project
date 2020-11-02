@@ -6,23 +6,32 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.expected_conditions import presence_of_element_located
-
-import urllib.request
 import os
+import urllib.request
+from urllib.error import HTTPError
 
 dir_path = "D:\\Jen\\Documents\\Dissertation\\Bee_Data\\"
 file_name = "bee"
-image_num = 2462
+image_num = 8588
 
 def download_image(url, num):
     print("[INFO] downloading {}".format(url))
     name = str(url.split('/')[-1])
-    urllib.request.urlretrieve(url, dir_path + file_name + str(num) + ".jpg")
+    no_image = False
+    try:
+        urllib.request.urlretrieve(url, dir_path + file_name + str(num) + ".jpg")
+    except HTTPError as err:
+        if err.code == 404:
+            no_image = True
+        else:
+            raise
+    return no_image
 
 def get_bee_data(num):
         #for image in driver.find_elements(By.CLASS_NAME, "fancybox"):
             #download_image(image.get_attribute("href"), num)
             #num += 1
+        no_image = False
         table = driver.find_element(By.ID, "report-grid-0")
         csv_path = dir_path + "Bee_Data.csv"
         with open(csv_path, 'a', newline='') as f:
@@ -33,13 +42,18 @@ def get_bee_data(num):
                     for cell in row.find_elements(By.TAG_NAME, "td"):
                         if "col-images" in cell.get_attribute("class"):
                             image = cell.find_element(By.CLASS_NAME, "fancybox")
-                            download_image(image.get_attribute("href"), num)
+                            if row_list[0] not in ["14537123", "14537122", "14537121", "14537119"]:
+                                no_image = download_image(image.get_attribute("href"), num)
+                            else:
+                                no_image = True
                             image_name = "bee" + str(num)
                             row_list.append(image_name)
-                            num += 1
+                            if not no_image:
+                                num += 1
                         elif ("col-actions" not in cell.get_attribute("class")) and ("footable-visible" != cell.get_attribute("class")):
                             row_list.append(cell.text)
-                beewriter.writerow(row_list)
+                if not no_image:
+                    beewriter.writerow(row_list)
         return num
 
 with webdriver.Firefox() as driver:
@@ -78,9 +92,9 @@ with webdriver.Firefox() as driver:
 
     driver.find_element_by_xpath('//a[contains(@href,"#controls-filter_when")]').click()
     time.sleep(1)
-    driver.find_element(By.ID, "date_from").send_keys("01/06/2020" + Keys.ENTER)
+    driver.find_element(By.ID, "date_from").send_keys("1/12/2019" + Keys.ENTER)
     time.sleep(1)
-    driver.find_element(By.ID, "date_to").send_keys("30/06/2020" + Keys.ENTER)
+    driver.find_element(By.ID, "date_to").send_keys("31/12/2019" + Keys.ENTER)
     time.sleep(1)
     driver.find_element_by_xpath("//div[@id='controls-filter_when']/form[@class='filter-controls']/fieldset/button[@class='fb-apply']").click()
 
