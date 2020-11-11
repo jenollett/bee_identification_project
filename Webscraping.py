@@ -12,7 +12,8 @@ from urllib.error import HTTPError
 
 dir_path = "D:\\Jen\\Documents\\Dissertation\\Bee_Data\\"
 file_name = "bee"
-image_num = 8588
+image_num = 9474
+day = "22/7/2019"
 
 def download_image(url, num):
     print("[INFO] downloading {}".format(url))
@@ -28,9 +29,6 @@ def download_image(url, num):
     return no_image
 
 def get_bee_data(num):
-        #for image in driver.find_elements(By.CLASS_NAME, "fancybox"):
-            #download_image(image.get_attribute("href"), num)
-            #num += 1
         no_image = False
         table = driver.find_element(By.ID, "report-grid-0")
         csv_path = dir_path + "Bee_Data.csv"
@@ -42,7 +40,7 @@ def get_bee_data(num):
                     for cell in row.find_elements(By.TAG_NAME, "td"):
                         if "col-images" in cell.get_attribute("class"):
                             image = cell.find_element(By.CLASS_NAME, "fancybox")
-                            if row_list[0] not in ["14537123", "14537122", "14537121", "14537119"]:
+                            if row_list[0] not in ["18084047", "12597517", "12504393", "12501491"]:
                                 no_image = download_image(image.get_attribute("href"), num)
                             else:
                                 no_image = True
@@ -52,8 +50,11 @@ def get_bee_data(num):
                                 num += 1
                         elif ("col-actions" not in cell.get_attribute("class")) and ("footable-visible" != cell.get_attribute("class")):
                             row_list.append(cell.text)
-                if not no_image:
-                    beewriter.writerow(row_list)
+                if (not no_image) and (row_list):
+                    try:
+                        beewriter.writerow(row_list)
+                    except:
+                        num -=1
         return num
 
 with webdriver.Firefox() as driver:
@@ -92,9 +93,9 @@ with webdriver.Firefox() as driver:
 
     driver.find_element_by_xpath('//a[contains(@href,"#controls-filter_when")]').click()
     time.sleep(1)
-    driver.find_element(By.ID, "date_from").send_keys("1/12/2019" + Keys.ENTER)
+    driver.find_element(By.ID, "date_from").send_keys(day + Keys.ENTER)
     time.sleep(1)
-    driver.find_element(By.ID, "date_to").send_keys("31/12/2019" + Keys.ENTER)
+    driver.find_element(By.ID, "date_to").send_keys(day + Keys.ENTER)
     time.sleep(1)
     driver.find_element_by_xpath("//div[@id='controls-filter_when']/form[@class='filter-controls']/fieldset/button[@class='fb-apply']").click()
 
@@ -104,5 +105,6 @@ with webdriver.Firefox() as driver:
     while driver.find_elements(By.ID, "page-report-grid-0-" + str(page_num)): #checks if there are any pages left
         driver.find_element(By.ID, "page-report-grid-0-" + str(page_num)).click()
         time.sleep(15)
+        input("Press Enter to continue...")
         image_num = get_bee_data(image_num)
         page_num += 1
